@@ -49,22 +49,32 @@
         display: none !important;
       }
 
-      /* Commune Labels Styling */
+      /* Commune Labels Styling - High Contrast */
       .commune-label-tooltip {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        font-weight: 800 !important;
-        font-size: 10px !important;
-        color: #475569 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        text-shadow: 0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white;
-        opacity: 0.7 !important;
+        padding: 0 !important;
         pointer-events: none !important;
       }
       .commune-label-tooltip::before {
         display: none !important;
+      }
+      .commune-inner-label {
+        font-weight: 900 !important;
+        font-size: 12px !important;
+        color: #0f172a !important; /* slate-900 */
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        text-shadow: 
+          -1.5px -1.5px 0 #fff,  
+           1.5px -1.5px 0 #fff,
+          -1.5px  1.5px 0 #fff,
+           1.5px  1.5px 0 #fff,
+           0px 0px 8px rgba(255,255,255,0.8);
+        opacity: 0.9;
+        text-align: center;
+        width: max-content;
       }
 
       /* Special Orange color for the selected persistent label */

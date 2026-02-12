@@ -13,7 +13,6 @@ import { CooperativeGeoJSON, CooperativeFeature } from './types.ts';
 import Sidebar from './components/Sidebar.tsx';
 import DetailPanel from './components/DetailPanel.tsx';
 import Header from './components/Header.tsx';
-import AIInsights from './components/AIInsights.tsx';
 
 
 // روابط البيانات الأساسية من GitHub
@@ -27,8 +26,9 @@ const LAYERS = {
   satellite: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
 };
 
-// مركز تقريبي لإقليم الدريوش كبداية سريعة قبل تحميل الحدود
-const DRIOUCH_CENTER: [number, number] = [35.0, -3.4];
+// مركز إقليم الدريوش للعرض الأولي
+const DRIOUCH_CENTER: [number, number] = [34.98, -3.42];
+const INITIAL_ZOOM = 10;
 
 const MapController: React.FC<{ 
   selectedCoop: CooperativeFeature | null; 
@@ -47,7 +47,7 @@ const MapController: React.FC<{
     return () => clearTimeout(timer);
   }, [isSidebarOpen, map]);
 
-  const fitToHome = useCallback(() => {
+  const fitToDriouch = useCallback(() => {
     let targetBounds: L.LatLngBounds | null = null;
 
     if (provinceBounds) {
@@ -59,24 +59,30 @@ const MapController: React.FC<{
     }
 
     if (targetBounds && targetBounds.isValid()) {
-      // إذا كانت المرة الأولى، نقوم بالقفز مباشرة بدون أنيميشن ليظهر الإقليم فوراً
-      const isFirstTime = !hasInitiallyFit.current;
-      
       map.fitBounds(targetBounds, { 
         padding: window.innerWidth < 768 ? [30, 30] : [70, 70], 
-        animate: !isFirstTime,
-        duration: isFirstTime ? 0 : 1.5
+        animate: true,
+        duration: 1.5
       });
-      hasInitiallyFit.current = true;
+    } else {
+        map.setView(DRIOUCH_CENTER, INITIAL_ZOOM);
     }
   }, [provinceBounds, data, map]);
 
-  // VUE HOME: تفعيل المنظور الشامل للإقليم عند البداية أو عند إعادة التعيين
+  // التركيز التلقائي عند التحميل الأول
   useEffect(() => {
-    if (!selectedCoop) {
-      fitToHome();
+    if (!hasInitiallyFit.current && (provinceBounds || data)) {
+      fitToDriouch();
+      hasInitiallyFit.current = true;
     }
-  }, [fitToHome, resetTrigger, selectedCoop]);
+  }, [fitToDriouch, provinceBounds, data]);
+
+  // VUE HOME
+  useEffect(() => {
+    if (resetTrigger > 0 && !selectedCoop) {
+      fitToDriouch();
+    }
+  }, [fitToDriouch, resetTrigger, selectedCoop]);
 
   useEffect(() => {
     if (selectedCoop && selectedCoop.geometry.type === 'Point') {
@@ -103,7 +109,6 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [mapLayer, setMapLayer] = useState<'standard' | 'satellite'>('satellite');
-  const [isAIModalOpen, setAIModalOpen] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(0);
   
   const [filterCommune, setFilterCommune] = useState("");
@@ -125,12 +130,14 @@ const App: React.FC = () => {
 
       if (resCoops.ok) {
         const json = await resCoops.json();
-        json.features = json.features.map((f: any, i: number) => ({
-          ...f,
-          properties: { ...f.properties, id: f.properties.id || `coop-${i}` }
-        }));
-        setData(json);
-        setLastUpdated(new Date());
+        if (json) {
+            json.features = json.features.map((f: any, i: number) => ({
+              ...f,
+              properties: { ...f.properties, id: f.properties.id || `coop-${i}` }
+            }));
+            setData(json);
+            setLastUpdated(new Date());
+        }
       }
 
       if (isInitial) {
@@ -309,7 +316,7 @@ const App: React.FC = () => {
         <main className="flex-1 relative h-full">
           <MapContainer 
             center={DRIOUCH_CENTER} 
-            zoom={10} 
+            zoom={INITIAL_ZOOM} 
             className="h-full w-full bg-slate-100"
             zoomControl={false}
             preferCanvas={true}
@@ -329,7 +336,7 @@ const App: React.FC = () => {
               <GeoJSON 
                 data={provinceBounds} 
                 interactive={false}
-                style={{ color: "#dc2626", weight: 3, fillOpacity: 0, dashArray: '6, 6' }}
+                style={{ color: "#1e293b", weight: 3, fillOpacity: 0, dashArray: '8, 8' }}
               />
             )}
 
@@ -337,16 +344,16 @@ const App: React.FC = () => {
               <GeoJSON 
                 data={communesBounds} 
                 interactive={false}
-                style={{ color: "#64748b", weight: 1.5, fillOpacity: 0.05 }}
+                style={{ color: "#ef4444", weight: 2.5, fillOpacity: 0.03, opacity: 0.8 }}
                 onEachFeature={(feature, layer) => {
                   const props = feature.properties || {};
-                  const communeName = props.Nom_Commun || props.Nom_Com || props.Commune || props.NOM;
+                  const communeName = props.Nom_Commun || props.Nom_Com || props.Commune || props.NOM || props.Nom;
                   if (communeName) {
-                    layer.bindTooltip(communeName, {
+                    layer.bindTooltip(`<div class="commune-inner-label">${communeName}</div>`, {
                       permanent: true,
                       direction: 'center',
                       className: 'commune-label-tooltip',
-                      opacity: 0.8
+                      opacity: 1
                     });
                   }
                 }}
@@ -411,7 +418,7 @@ const App: React.FC = () => {
             <button 
               onClick={handleHomeClick}
               className="p-3 bg-white rounded-xl shadow-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all active:scale-95 group"
-              title="VUE HOME (Vue Provinciale)"
+              title="Focus sur Driouch"
             >
               <Home size={22} className="group-hover:scale-110 transition-transform" />
             </button>
@@ -436,25 +443,7 @@ const App: React.FC = () => {
         >
           <Mail size={24} className="group-hover:text-blue-600 transition-colors" />
         </a>
-
-        {data && (
-          <button 
-            onClick={() => setAIModalOpen(true)}
-            className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all group"
-          >
-            <div className="bg-white/20 p-2 rounded-xl group-hover:rotate-12 transition-transform">
-               <Loader2 size={20} className={refreshing ? 'animate-spin' : ''} />
-            </div>
-            <span className="font-bold tracking-tight">Intelligence AI</span>
-          </button>
-        )}
       </div>
-
-      <AIInsights 
-        isOpen={isAIModalOpen} 
-        onClose={() => setAIModalOpen(false)} 
-        data={filteredFeatures}
-      />
     </div>
   );
 };
