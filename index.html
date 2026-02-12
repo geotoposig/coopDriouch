@@ -3,53 +3,65 @@
 <html lang="fr" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Coopératives de Driouch | Interactive Map</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --font-primary: 'Inter', sans-serif;
+        --font-arabic: 'Cairo', sans-serif;
+        --color-official-blue: #0f172a;
+      }
       body {
-        font-family: 'Inter', 'Cairo', sans-serif;
+        font-family: var(--font-primary);
+        -webkit-font-smoothing: antialiased;
+        background-color: #f8fafc;
+      }
+      .font-cairo {
+        font-family: var(--font-arabic) !important;
       }
       .leaflet-container {
         height: 100%;
         width: 100%;
         z-index: 1;
+        background-color: #e2e8f0;
       }
       .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
       }
       .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: transparent;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #888;
+        background: #cbd5e1;
         border-radius: 10px;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #555;
+        background: #94a3b8;
       }
 
-      /* Transparent Tooltips with Text Shadow for readability */
-      .coop-label-tooltip, .coop-label-tooltip-persistent {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        font-weight: 700 !important;
+      /* Tooltips for cooperatives */
+      .coop-label-tooltip {
+        background: rgba(255, 255, 255, 0.98) !important;
+        border: 2px solid #0f172a !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+        font-weight: 800 !important;
         font-size: 11px !important;
-        color: #1e293b !important;
-        padding: 0 !important;
-        text-shadow: 0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white;
+        color: #0f172a !important;
+        padding: 6px 14px !important;
         white-space: nowrap !important;
+        font-family: var(--font-arabic);
       }
-      .coop-label-tooltip::before, .coop-label-tooltip-persistent::before {
+      .coop-label-tooltip::before {
         display: none !important;
       }
 
-      /* Commune Labels Styling - High Contrast */
+      /* Official Commune Labels (nom_) */
       .commune-label-tooltip {
         background: transparent !important;
         border: none !important;
@@ -61,40 +73,45 @@
         display: none !important;
       }
       .commune-inner-label {
+        font-family: var(--font-arabic);
         font-weight: 900 !important;
-        font-size: 12px !important;
-        color: #0f172a !important; /* slate-900 */
+        font-size: 14px !important;
+        color: #1e293b !important; /* slate-800 */
         text-transform: uppercase;
-        letter-spacing: 0.15em;
+        letter-spacing: 0.12em;
         text-shadow: 
-          -1.5px -1.5px 0 #fff,  
-           1.5px -1.5px 0 #fff,
-          -1.5px  1.5px 0 #fff,
-           1.5px  1.5px 0 #fff,
-           0px 0px 8px rgba(255,255,255,0.8);
-        opacity: 0.9;
+          -2.5px -2.5px 0 #fff,  
+           2.5px -2.5px 0 #fff,
+          -2.5px  2.5px 0 #fff,
+           2.5px  2.5px 0 #fff,
+           0px 0px 15px rgba(255,255,255,1);
+        opacity: 1;
         text-align: center;
         width: max-content;
       }
 
-      /* Special Orange color for the selected persistent label */
-      .coop-label-tooltip-persistent {
-        font-size: 12px !important;
-        color: #ea580c !important; /* orange-600 */
-        text-shadow: 0 0 5px white, 0 0 5px white, 0 0 5px white, 0 0 5px white;
+      @media (max-width: 768px) {
+        .commune-inner-label {
+          font-size: 11px !important;
+          text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff;
+        }
       }
 
-      .leaflet-popup-content-wrapper {
-        border-radius: 12px;
-        padding: 0;
-        overflow: hidden;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      /* Marker selection style */
+      .coop-label-tooltip-persistent {
+        background: #0f172a !important;
+        color: white !important;
+        font-size: 13px !important;
+        font-weight: 900 !important;
+        padding: 8px 16px !important;
+        border-radius: 14px !important;
+        border: 3px solid white !important;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.3) !important;
+        text-shadow: none !important;
+        font-family: var(--font-arabic);
       }
-      .leaflet-popup-content {
-        margin: 12px 16px;
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        color: #1a1a1a;
+      .coop-label-tooltip-persistent::before {
+        border-top-color: #0f172a !important;
       }
     </style>
   <script type="importmap">
@@ -116,7 +133,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-gray-50">
+  <body class="bg-slate-50">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

@@ -6,29 +6,26 @@ import {
   Loader2,
   Menu,
   Home,
-  RefreshCcw,
-  Mail
+  RefreshCcw
 } from 'lucide-react';
 import { CooperativeGeoJSON, CooperativeFeature } from './types.ts';
 import Sidebar from './components/Sidebar.tsx';
 import DetailPanel from './components/DetailPanel.tsx';
 import Header from './components/Header.tsx';
 
-
-// روابط البيانات الأساسية من GitHub
+// الروابط الأساسية
 const GEOJSON_URL = "https://raw.githubusercontent.com/sigtopo/SIGAID/refs/heads/main/CooperativesDriouch.geojson";
 const COMMUNES_BOUNDS_URL = "https://raw.githubusercontent.com/sigtopo/SIGAID/refs/heads/main/COMMUNES_DRIOUCH.geojson";
 const PROVINCE_BOUNDS_URL = "https://raw.githubusercontent.com/geotoposig/AIDSIG/refs/heads/main/PROVINCE_DRIOUCH.geojson";
-
 
 const LAYERS = {
   standard: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   satellite: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
 };
 
-// مركز إقليم الدريوش للعرض الأولي
-const DRIOUCH_CENTER: [number, number] = [34.98, -3.42];
-const INITIAL_ZOOM = 10;
+// إحداثيات تغطي جهة الشرق بالكامل (الحسيمة، الناظور، الدريوش، جرسيف، وجدة)
+const REGIONAL_CENTER: [number, number] = [34.7, -2.9];
+const INITIAL_ZOOM = 8;
 
 const MapController: React.FC<{ 
   selectedCoop: CooperativeFeature | null; 
@@ -47,42 +44,24 @@ const MapController: React.FC<{
     return () => clearTimeout(timer);
   }, [isSidebarOpen, map]);
 
-  const fitToDriouch = useCallback(() => {
-    let targetBounds: L.LatLngBounds | null = null;
+  const fitToHome = useCallback(() => {
+    map.setView(REGIONAL_CENTER, INITIAL_ZOOM, { animate: true, duration: 1.5 });
+  }, [map]);
 
-    if (provinceBounds) {
-      const geoJsonLayer = L.geoJSON(provinceBounds);
-      targetBounds = geoJsonLayer.getBounds();
-    } else if (data && data.features.length > 0) {
-      const geoJsonLayer = L.geoJSON(data as any);
-      targetBounds = geoJsonLayer.getBounds();
-    }
-
-    if (targetBounds && targetBounds.isValid()) {
-      map.fitBounds(targetBounds, { 
-        padding: window.innerWidth < 768 ? [30, 30] : [70, 70], 
-        animate: true,
-        duration: 1.5
-      });
-    } else {
-        map.setView(DRIOUCH_CENTER, INITIAL_ZOOM);
-    }
-  }, [provinceBounds, data, map]);
-
-  // التركيز التلقائي عند التحميل الأول
+  // التركيز الأول على المنطقة الإقليمية
   useEffect(() => {
-    if (!hasInitiallyFit.current && (provinceBounds || data)) {
-      fitToDriouch();
+    if (!hasInitiallyFit.current) {
+      map.setView(REGIONAL_CENTER, INITIAL_ZOOM);
       hasInitiallyFit.current = true;
     }
-  }, [fitToDriouch, provinceBounds, data]);
+  }, [map]);
 
   // VUE HOME
   useEffect(() => {
     if (resetTrigger > 0 && !selectedCoop) {
-      fitToDriouch();
+      fitToHome();
     }
-  }, [fitToDriouch, resetTrigger, selectedCoop]);
+  }, [fitToHome, resetTrigger, selectedCoop]);
 
   useEffect(() => {
     if (selectedCoop && selectedCoop.geometry.type === 'Point') {
@@ -223,12 +202,12 @@ const App: React.FC = () => {
         html: `
           <div class="flex items-center justify-center">
             <div class="relative">
-              <div class="absolute inset-0 w-10 h-10 -mt-3 -ml-3 bg-blue-600/20 rounded-full animate-ping"></div>
+              <div class="absolute inset-0 w-10 h-10 -mt-3 -ml-3 bg-red-600/20 rounded-full animate-ping"></div>
               <div class="relative flex flex-col items-center">
-                <div class="w-9 h-9 rounded-full bg-[#2563eb] border-2 border-white shadow-2xl flex items-center justify-center z-20">
+                <div class="w-9 h-9 rounded-full bg-[#dc2626] border-2 border-white shadow-2xl flex items-center justify-center z-20">
                   <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
                 </div>
-                <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[12px] border-t-[#2563eb] -mt-2.5 z-10"></div>
+                <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[12px] border-t-[#dc2626] -mt-2.5 z-10"></div>
               </div>
             </div>
           </div>
@@ -242,8 +221,8 @@ const App: React.FC = () => {
       className: 'custom-div-icon',
       html: `
         <div class="flex items-center justify-center">
-          <div class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-white border-[2px] md:border-[2.5px] border-[#2563eb] shadow-md flex items-center justify-center hover:scale-150 transition-all duration-300">
-            <div class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#2563eb]"></div>
+          <div class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-white border-[2px] md:border-[2.5px] border-[#dc2626] shadow-md flex items-center justify-center hover:scale-150 transition-all duration-300">
+            <div class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#dc2626]"></div>
           </div>
         </div>
       `,
@@ -275,7 +254,7 @@ const App: React.FC = () => {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-white text-slate-800">
         <Loader2 className="w-12 h-12 animate-spin mb-4" />
-        <h2 className="text-xl font-bold tracking-tight text-center px-4">Préparation de l'Observatoire...</h2>
+        <h2 className="text-xl font-bold tracking-tight text-center px-4 font-cairo">جاري تجهيز المرصد...</h2>
       </div>
     );
   }
@@ -315,7 +294,7 @@ const App: React.FC = () => {
 
         <main className="flex-1 relative h-full">
           <MapContainer 
-            center={DRIOUCH_CENTER} 
+            center={REGIONAL_CENTER} 
             zoom={INITIAL_ZOOM} 
             className="h-full w-full bg-slate-100"
             zoomControl={false}
@@ -336,7 +315,7 @@ const App: React.FC = () => {
               <GeoJSON 
                 data={provinceBounds} 
                 interactive={false}
-                style={{ color: "#1e293b", weight: 3, fillOpacity: 0, dashArray: '8, 8' }}
+                style={{ color: "#1e293b", weight: 4, fillOpacity: 0, dashArray: '8, 8' }}
               />
             )}
 
@@ -347,7 +326,8 @@ const App: React.FC = () => {
                 style={{ color: "#ef4444", weight: 2.5, fillOpacity: 0.03, opacity: 0.8 }}
                 onEachFeature={(feature, layer) => {
                   const props = feature.properties || {};
-                  const communeName = props.Nom_Commun || props.Nom_Com || props.Commune || props.NOM || props.Nom;
+                  // الاعتماد على حقل nom_ كأولوية قصوى كما طُلب
+                  const communeName = props.nom_ || props.Nom_Commun || props.Nom_Com || props.Commune || props.NOM || props.Nom;
                   if (communeName) {
                     layer.bindTooltip(`<div class="commune-inner-label">${communeName}</div>`, {
                       permanent: true,
@@ -418,7 +398,7 @@ const App: React.FC = () => {
             <button 
               onClick={handleHomeClick}
               className="p-3 bg-white rounded-xl shadow-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all active:scale-95 group"
-              title="Focus sur Driouch"
+              title="الرجوع للرؤية الشاملة"
             >
               <Home size={22} className="group-hover:scale-110 transition-transform" />
             </button>
@@ -427,22 +407,12 @@ const App: React.FC = () => {
               onClick={handleManualRefresh}
               disabled={refreshing}
               className="p-3 bg-white rounded-xl shadow-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all active:scale-95 group disabled:opacity-50"
-              title="Rafraîchir les données"
+              title="تحديث البيانات"
             >
               <RefreshCcw size={22} className={`${refreshing ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-700`} />
             </button>
           </div>
         </main>
-      </div>
-
-      <div className="fixed bottom-6 right-6 z-[5000] flex flex-col items-end gap-4">
-        <a 
-          href="mailto:jilitsig@gmail.com"
-          className="flex items-center justify-center w-14 h-14 bg-white text-slate-700 rounded-2xl shadow-2xl hover:bg-slate-50 hover:scale-110 active:scale-95 transition-all group border border-slate-200"
-          title="Contactez-nous: jilitsig@gmail.com"
-        >
-          <Mail size={24} className="group-hover:text-blue-600 transition-colors" />
-        </a>
       </div>
     </div>
   );
