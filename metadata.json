@@ -1,0 +1,7 @@
+{
+  "name": "Localisation des Coopératives Driouch",
+  "description": "An interactive map and dashboard for exploring cooperatives in the Driouch province, featuring GeoJSON visualization and AI-powered insights.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
