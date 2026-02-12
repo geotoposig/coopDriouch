@@ -17,8 +17,8 @@ import AIInsights from './components/AIInsights.tsx';
 
 
 // روابط البيانات الأساسية من GitHub
-const GEOJSON_URL = "https://geotoposig.com/Cooperatives_Driouch.geojson";
-const COMMUNES_BOUNDS_URL = "https://raw.githubusercontent.com/geotoposig/AIDSIG/refs/heads/main/COMMUNES_DRIOUCH.geojson";
+const GEOJSON_URL = "https://raw.githubusercontent.com/sigtopo/SIGAID/refs/heads/main/CooperativesDriouch.geojson";
+const COMMUNES_BOUNDS_URL = "https://raw.githubusercontent.com/sigtopo/SIGAID/refs/heads/main/COMMUNES_DRIOUCH.geojson";
 const PROVINCE_BOUNDS_URL = "https://raw.githubusercontent.com/geotoposig/AIDSIG/refs/heads/main/PROVINCE_DRIOUCH.geojson";
 
 const LAYERS = {
