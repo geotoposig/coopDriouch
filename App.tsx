@@ -21,6 +21,7 @@ const GEOJSON_URL = "https://raw.githubusercontent.com/sigtopo/SIGAID/refs/heads
 const COMMUNES_BOUNDS_URL = "https://raw.githubusercontent.com/sigtopo/SIGAID/refs/heads/main/COMMUNES_DRIOUCH.geojson";
 const PROVINCE_BOUNDS_URL = "https://raw.githubusercontent.com/geotoposig/AIDSIG/refs/heads/main/PROVINCE_DRIOUCH.geojson";
 
+
 const LAYERS = {
   standard: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   satellite: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
@@ -336,7 +337,19 @@ const App: React.FC = () => {
               <GeoJSON 
                 data={communesBounds} 
                 interactive={false}
-                style={{ color: "#475569", weight: 1, fillOpacity: 0.02, dashArray: '2, 4' }}
+                style={{ color: "#64748b", weight: 1.5, fillOpacity: 0.05 }}
+                onEachFeature={(feature, layer) => {
+                  const props = feature.properties || {};
+                  const communeName = props.Nom_Commun || props.Nom_Com || props.Commune || props.NOM;
+                  if (communeName) {
+                    layer.bindTooltip(communeName, {
+                      permanent: true,
+                      direction: 'center',
+                      className: 'commune-label-tooltip',
+                      opacity: 0.8
+                    });
+                  }
+                }}
               />
             )}
 
